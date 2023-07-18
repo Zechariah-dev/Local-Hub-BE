@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsArray,
   IsBoolean,
@@ -21,6 +21,41 @@ class Collaborator {
   @IsString()
   @ApiProperty()
   role: string;
+}
+
+class Personalization {
+  @IsString()
+  @ApiProperty()
+  instruction: string;
+
+  @IsBoolean()
+  @ApiProperty()
+  isOptional: boolean;
+}
+
+class Variant {
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional()
+  color: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional()
+  size: string;
+
+  @IsNumber()
+  @ApiProperty()
+  price: number;
+
+  @IsNumber()
+  @Min(1)
+  @ApiProperty()
+  quantity: number;
+
+  @IsBoolean()
+  @ApiProperty()
+  isVisible: boolean;
 }
 
 export class CreateProductDto {
@@ -59,22 +94,25 @@ export class CreateProductDto {
   @ApiProperty()
   currency: string;
 
-  @IsBoolean()
-  @ApiProperty()
-  personalization: boolean;
+  @IsOptional()
+  @ValidateNested()
+  @ApiPropertyOptional()
+  personalization: Personalization;
 
   @IsArray()
-  @ApiProperty()
-  variation: string[];
+  @ValidateNested()
+  @IsOptional()
+  @ApiPropertyOptional()
+  variation: Variant[];
 
   @IsArray()
   @ValidateNested()
   collaborationPartners: Collaborator[];
 
   @IsArray()
-  sections: string[]
+  sections: string[];
 
   @IsArray()
   @IsNotEmpty()
-  category: Types.ObjectId[];
+  categories: Types.ObjectId[];
 }

@@ -4,7 +4,7 @@ import { ProductController } from "./product.controller";
 import { ProductRepository } from "./product.repository";
 import { MongooseModule } from "@nestjs/mongoose";
 import { Product, ProductSchema } from "./schemas/product.schema";
-import { CloudinaryService } from "../../../cloudinary/cloudinary.service";
+import { CloudinaryService } from "../cloudinary/cloudinary.service";
 
 @Module({
   imports: [

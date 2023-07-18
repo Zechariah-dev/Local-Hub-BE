@@ -3,9 +3,7 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
-  Delete,
   UseInterceptors,
   UploadedFile,
   HttpCode,
@@ -14,46 +12,53 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import { CategoryService } from "./category.service";
 import { CreateCategoryDto } from "./dto/create-category.dto";
-import { UpdateCategoryDto } from "./dto/update-category.dto";
-import { ApiTags } from "@nestjs/swagger";
+import { ApiConsumes, ApiCreatedResponse, ApiTags } from "@nestjs/swagger";
+import { CloudinaryService } from "@v1/cloudinary/cloudinary.service";
+import { ParseObjectIdPipe } from "src/pipes/parse-object-id.pipe";
+import { Types } from "mongoose";
 
 @Controller("category")
 @ApiTags("Category")
 export class CategoryController {
-  constructor(private readonly categoryService: CategoryService) {}
+  constructor(
+    private readonly categoryService: CategoryService,
+    private readonly cloudinaryService: CloudinaryService
+  ) {}
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(FileInterceptor("file"))
-  create(
-    @Body() body: CreateCategoryDto,
-    @UploadedFile() file: Express.Multer.File
+  @ApiConsumes("multipart/form-data")
+  @ApiCreatedResponse({
+    description: "201, Category created successfully",
+  })
+  async create(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: CreateCategoryDto
   ) {
-    return this.categoryService.create(body);
+    const output = await this.cloudinaryService.uploadFile(file);
+
+    const category = await this.categoryService.create({
+      ...body,
+      image: output.secure_url,
+    });
+
+    return { success: true, data: category };
   }
 
   @Get()
   @HttpCode(HttpStatus.OK)
   async fetch() {
-    const data = await this.categoryService.findAll();
+    const categories = await this.categoryService.findAll();
 
-    return { success: true, data };
+    return { success: true, data: categories };
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.categoryService.findOne(+id);
-  }
+  @HttpCode(HttpStatus.OK)
+  async findOne(@Param("id", ParseObjectIdPipe) id: Types.ObjectId) {
+    const category = await this.categoryService.findById(id);
 
-  @Patch(":id")
-  update(
-    @Param("id") id: string,
-    @Body() updateCategoryDto: UpdateCategoryDto
-  ) {
-    return this.categoryService.update(+id, updateCategoryDto);
-  }
-
-  @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.categoryService.remove(+id);
+    return { success: true, data: category };
   }
 }

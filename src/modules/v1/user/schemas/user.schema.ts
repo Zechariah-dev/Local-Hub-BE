@@ -114,6 +114,19 @@ export class User {
     phone: string;
   };
 
+  @Prop({
+    required: false,
+    type: String,
+  })
+  bussinessImage: string = "";
+
+  
+  @Prop({
+    required: false,
+    type: String,
+  })
+  bussinessCoverImage: string = "";
+
   @Prop()
   createdAt?: Date;
 

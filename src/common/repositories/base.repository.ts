@@ -6,6 +6,7 @@ import {
   UpdateQuery,
   QueryOptions,
   Document,
+  Types,
 } from "mongoose";
 import { ClientSession } from "mongodb";
 
@@ -86,7 +87,10 @@ export abstract class BaseRepository<T extends Document> {
       .lean();
   }
 
-  public async findById(id: string, withPassword = false): Promise<T | null> {
+  public async findById(
+    id: Types.ObjectId,
+    withPassword = false
+  ): Promise<T | null> {
     const query = this.model.findById(id);
 
     if (!withPassword) {

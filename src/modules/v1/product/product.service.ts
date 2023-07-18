@@ -1,10 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { CreateProductDto } from "./dto/create-product.dto";
-import { UpdateProductDto } from "./dto/update-product.dto";
 import { ProductRepository } from "./product.repository";
 import { InjectModel } from "@nestjs/mongoose";
 import { Product } from "./schemas/product.schema";
-import { Model } from "mongoose";
+import { Model, Types } from "mongoose";
+import { CreateProductPayload } from "./product.interface";
 
 @Injectable()
 export class ProductService {
@@ -13,35 +13,39 @@ export class ProductService {
     @InjectModel(Product.name) private readonly productsModel: Model<Product>
   ) {}
 
-  public async create(
-    payload: CreateProductDto,
-    owner: string,
-    images: string[]
-  ) {
-    const product = await this.productsRepository.create({
-      ...payload,
-      owner,
-      images,
-    });
+  async create(payload: CreateProductPayload) {
+    const product = await this.productsRepository.create(payload);
 
     return product;
   }
 
-  public async fetchByUser(owner: string, page = 1, limit = 10) {
+  async fetchByUser(owner: string, page = 1, limit = 10) {
     return this.productsModel
       .find({ owner })
       .skip((page - 1) * limit)
       .limit(limit);
   }
 
-  public async update(_id: string, owner: string, payload: UpdateProductDto) {
+  async update(
+    _id: Types.ObjectId,
+    owner: Types.ObjectId,
+    payload: Partial<Product>
+  ) {
     return this.productsRepository.findOneAndUpdate(
       { _id, owner },
       { ...payload }
     );
   }
 
-  public async delete(_id: string, owner: string) {
+  async delete(_id: string, owner: string) {
     return this.productsRepository.deleteOne({ _id, owner });
+  }
+
+  async findUnique(title: string, owner: Types.ObjectId) {
+    return this.productsRepository.findUniqueProduct(title, owner);
+  }
+
+  async findById(id: Types.ObjectId): Promise<Product | null> {
+    return this.productsRepository.findById(id);
   }
 }

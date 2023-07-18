@@ -2,9 +2,7 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Document } from "mongoose";
 
 @Schema({ timestamps: true })
-export class Category {
-  _id: string;
-
+export class Category extends Document {
   @Prop({
     required: true,
     unique: true,

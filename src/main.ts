@@ -1,11 +1,14 @@
 import { NestFactory } from "@nestjs/core";
-import { AppModule } from "./app.module";
+import { AppModule } from "./modules/app/app.module";
 import { ConfigService } from "@nestjs/config";
-import { ValidationPipe } from "@nestjs/common";
+import { Logger, ValidationPipe } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { ResponseInterceptor } from "./interceptors/respnse.interceptor";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  const logger = new Logger("Main");
 
   app.enableCors();
   app.useGlobalPipes(
@@ -13,6 +16,8 @@ async function bootstrap() {
       transform: true,
     })
   );
+
+  app.useGlobalInterceptors(new ResponseInterceptor());
 
   // swagger doc setup
   const config = new DocumentBuilder()
@@ -29,7 +34,7 @@ async function bootstrap() {
   const port = configService.get<number>("PORT") || 8888;
 
   await app.listen(port, () => {
-    console.log("Server running on port ", port);
+    logger.log(`Server listening on port ${port}`);
   });
 }
 

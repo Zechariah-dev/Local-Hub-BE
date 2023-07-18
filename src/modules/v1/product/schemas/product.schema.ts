@@ -51,16 +51,41 @@ export class Product {
 
   @Prop({
     required: false,
-    type: Boolean,
-    default: false,
+    type: {
+      instruction: String,
+      isOptional: Boolean,
+    },
   })
-  personalization: boolean = false;
+  personalization: {
+    instruction: string;
+    IsOptional: boolean;
+  };
 
   @Prop({
     required: false,
-    type: [String],
+    type: [
+      {
+        size: {
+          type: String,
+          required: false,
+        },
+        color: {
+          type: String,
+          required: false,
+        },
+        price: Number,
+        quantity: Number,
+        isVisible: Boolean,
+      },
+    ],
   })
-  variation: string[];
+  variation: {
+    size: string;
+    color: string;
+    price: number;
+    quantity: number;
+    isVisible: boolean;
+  }[];
 
   @Prop({
     required: false,
@@ -80,13 +105,14 @@ export class Product {
   sections: string[];
 
   @Prop({
-    required: true,
+    required: false,
     type: [String],
   })
   images: string[];
 
   @Prop({
     required: false,
+    default: 0,
     min: 0,
     max: 100,
   })
@@ -94,10 +120,10 @@ export class Product {
 
   @Prop({
     required: true,
-    type: Types.ObjectId,
+    type: [Types.ObjectId],
     ref: "categories",
   })
-  category: Types.ObjectId;
+  categories: Types.ObjectId[];
 
   @Prop({
     required: false,
@@ -129,6 +155,8 @@ export class Product {
 
   @Prop()
   updatedAt?: Date;
+
+  deletedAt?: Date;
 }
 
 export type ProductDocument = Product & Document;

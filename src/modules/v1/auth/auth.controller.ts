@@ -9,6 +9,7 @@ import {
   HttpCode,
   BadRequestException,
   UnprocessableEntityException,
+  NotFoundException,
 } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { AuthGuard } from "@nestjs/passport";
@@ -22,6 +23,8 @@ import {
 } from "@nestjs/swagger";
 import { UserService } from "../user/user.service";
 import * as bcrypt from "bcrypt";
+import { ForgotPasswordDto } from "./dto/forgot-password.dto";
+import { MailerService } from "@nestjs-modules/mailer";
 
 @Controller("auth")
 @ApiTags("Auth")
@@ -60,5 +63,12 @@ export class AuthController {
     const data = await this.authService.logInAccount(body);
 
     return { success: true, data };
+  }
+
+  @Post("/forgot-password")
+  async forgotPassword(@Body() body: ForgotPasswordDto) {
+    const result = await this.authService.forwardPasswordResetLink(body.email);
+
+    return;
   }
 }

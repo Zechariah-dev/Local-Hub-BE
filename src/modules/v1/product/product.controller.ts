@@ -1,4 +1,4 @@
-import { CloudinaryService } from "./../../../cloudinary/cloudinary.service";
+import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import {
   Controller,
   Get,
@@ -15,10 +15,11 @@ import {
   HttpStatus,
   Query,
   UnprocessableEntityException,
+  BadRequestException,
+  NotFoundException,
 } from "@nestjs/common";
 import { ProductService } from "./product.service";
 import { CreateProductDto } from "./dto/create-product.dto";
-import { UpdateProductDto } from "./dto/update-product.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { FilesInterceptor } from "@nestjs/platform-express";
 import { PaginationParams } from "./dto/pagination-params.dto";
@@ -32,6 +33,8 @@ import {
   ApiTags,
   ApiUnprocessableEntityResponse,
 } from "@nestjs/swagger";
+import { ParseObjectIdPipe } from "src/pipes/parse-object-id.pipe";
+import { Types } from "mongoose";
 
 @Controller("product")
 @UseGuards(JwtAuthGuard)
@@ -44,32 +47,53 @@ export class ProductController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @UseInterceptors(FilesInterceptor("files"))
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({ description: "Creeate user product" })
   @ApiCreatedResponse({ description: "product created successfully" })
-  public async create(
-    @Body() body: CreateProductDto,
+  public async create(@Body() body: CreateProductDto, @Req() req) {
+    let product = await this.productService.findUnique(
+      body.title,
+      req.user._id
+    );
+
+    if (product) {
+      throw new BadRequestException("Prduct already exists in your catalogI");
+    }
+
+    product = await this.productService.create({
+      ...body,
+      owner: req.user._id,
+    });
+
+    return {
+      sucess: true,
+      data: product,
+    };
+  }
+  @Post("/upload/:id")
+  @UseInterceptors(FilesInterceptor("files"))
+  @ApiConsumes("multipart/form-data")
+  async uploadProductImages(
+    @Param("id", ParseObjectIdPipe) id: Types.ObjectId,
     @UploadedFiles() files: Array<Express.Multer.File>,
     @Req() req
   ) {
-    let images: string[];
+    let product = await this.productService.findById(id);
+
+    if (!product) {
+      throw new NotFoundException("product not found");
+    }
+
+    const images = [];
 
     for (const file of files) {
       const output = await this.cloudinaryService.uploadFile(file);
       images.push(output.secure_url);
     }
 
-    const product = await this.productService.create(
-      body,
-      req.user._id,
-      images
-    );
+    product = await this.productService.update(id, req.user._id, {
+      images,
+    });
 
-    return {
-      success: true,
-      data: product,
-    };
+    return { success: true, message: "uploaded product images", data: product };
   }
 
   @Get()
@@ -97,15 +121,15 @@ export class ProductController {
     return { success: true, data: products };
   }
 
-  @Patch()
+  @Patch(":id")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ description: "Update user product" })
   @ApiOkResponse({ description: "product updated successfully" })
   @ApiUnprocessableEntityResponse({ description: "unable to update product" })
   @ApiParam({ name: "id", type: "string" })
   public async editProduct(
-    @Param("id") id: string,
-    @Body() body: UpdateProductDto,
+    @Param("id", ParseObjectIdPipe) id: Types.ObjectId,
+    @Body() body,
     @Req() req
   ) {
     const product = await this.productService.update(id, req.user._id, body);

@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 import { MongooseModule } from "@nestjs/mongoose";
 import { User, UserSchema } from "./schemas/user.schema";
 import { UsersRepository } from "./user.repository";
-import { CloudinaryService } from "../../../cloudinary/cloudinary.service";
+import { CloudinaryService } from "../cloudinary/cloudinary.service";
 
 @Module({
   imports: [

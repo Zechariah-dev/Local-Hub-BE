@@ -9,12 +9,16 @@ import {
   UseInterceptors,
   Post,
   UploadedFile,
+  UploadedFiles,
 } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
-import { FileInterceptor } from "@nestjs/platform-express";
-import { CloudinaryService } from "../../../cloudinary/cloudinary.service";
+import {
+  FileFieldsInterceptor,
+  FileInterceptor,
+} from "@nestjs/platform-express";
+import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import { ApiOkResponse, ApiTags } from "@nestjs/swagger";
 
 @Controller("user")
@@ -53,5 +57,49 @@ export class UserController {
       success: true,
       data: user,
     };
+  }
+
+  @Post("/profile/business-image")
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      {
+        name: "image",
+        maxCount: 1,
+      },
+      {
+        name: "cover",
+        maxCount: 1,
+      },
+    ])
+  )
+  @ApiOkResponse({})
+  public async updateBusinessImages(
+    @UploadedFiles()
+    files: { image?: Express.Multer.File[]; cover?: Express.Multer.File[] },
+    @Req() req
+  ) {
+    let payload: {
+      [key: string]: string;
+    };
+
+    console.log(files);
+
+    // if (image) {
+    //   const output = await this.cloudinaryService.uploadFile(image);
+    //   payload.businessImage = output.secure_url;
+    // }
+
+    // if (cover) {
+    //   const output = await this.cloudinaryService.uploadFile(cover);
+    //   payload.businessCoverImage = output.secure_url;
+    // }
+
+    // const user = await this.userService.updateProfile(req.user._id, payload);
+
+    // return {
+    //   success: true,
+    //   data: user,
+    // };
   }
 }
