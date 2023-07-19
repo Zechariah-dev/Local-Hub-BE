@@ -58,7 +58,7 @@ export class Product {
   })
   personalization: {
     instruction: string;
-    IsOptional: boolean;
+    isOptional: boolean;
   };
 
   @Prop({

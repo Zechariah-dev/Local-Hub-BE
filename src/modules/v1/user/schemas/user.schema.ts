@@ -1,12 +1,9 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document, Types } from "mongoose";
-import * as bcrypt from "bcrypt";
+import { Document, HydratedDocument, Types } from "mongoose";
 import { UserRole } from "../user.interface";
 
 @Schema({ timestamps: true })
-export class User {
-  _id: string;
-
+export class User extends Document {
   @Prop({
     required: true,
     unique: true,
@@ -120,7 +117,6 @@ export class User {
   })
   bussinessImage: string = "";
 
-  
   @Prop({
     required: false,
     type: String,
@@ -134,7 +130,7 @@ export class User {
   updatedAt?: Date;
 }
 
-export type UserDocument = User & Document;
+export type UserDocument = HydratedDocument<User>;
 
 export const UserSchema = SchemaFactory.createForClass(User).set(
   "versionKey",
