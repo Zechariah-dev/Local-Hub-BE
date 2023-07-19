@@ -12,6 +12,8 @@ import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import * as crypto from "crypto";
 import { MailerService } from "@nestjs-modules/mailer";
+import jwt from "../../../constants/jwt";
+import { JwtPayload } from "./auth.interface";
 
 @Injectable()
 export class AuthService {
@@ -51,6 +53,20 @@ export class AuthService {
     return { tokens: { accessToken, refreshToken }, user };
   }
 
+  async generateTokens(payload: JwtPayload) {
+    const accessToken = this.jwtService.sign(payload, {
+      secret: this.configService.get("JWT_SECRET"),
+      expiresIn: jwt.token_expiry.access_token_expiry,
+    });
+
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: this.configService.get("JWT_REFRESH_SECRET"),
+      expiresIn: jwt.token_expiry.refresh_token_expiry,
+    });
+
+    return { accessToken, refreshToken };
+  }
+
   private async generatePasswordResetLink(email: string) {
     const hash = crypto.createHash("sha256").update(email).digest("hex");
     const encoded = this.jwtService.sign(
@@ -65,16 +81,10 @@ export class AuthService {
 
   async forwardPasswordResetLink(email: string) {
     try {
-      const user = await this.userService.findByEmail(email);
-
-      if (!user) {
-        throw new NotFoundException("email is not registered");
-      }
-
       const link = await this.generatePasswordResetLink(email);
 
       const result = await this.mailerService.sendMail({
-        to: user.email,
+        to: email,
         from: "omoladesunday2017@gmail.com",
         subject: "Password Reset",
         // template: "forgot-password",

@@ -24,7 +24,7 @@ import {
 import { UserService } from "../user/user.service";
 import * as bcrypt from "bcrypt";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
-import { MailerService } from "@nestjs-modules/mailer";
+import { GoogleOAuthGuard } from "../../../guards/google-oauth.guard";
 
 @Controller("auth")
 @ApiTags("Auth")
@@ -35,19 +35,18 @@ export class AuthController {
   ) {}
 
   @Post("/signup")
-  @ApiBody({ type: [SignUpAuthDto] })
-  @ApiCreatedResponse({})
+  @ApiCreatedResponse({ description: "201, User registered sucessfully" })
   @HttpCode(HttpStatus.CREATED)
   async signup(@Body() body: SignUpAuthDto) {
-    let user = await this.userService.findOne({ email: body.email });
+    let userExist = await this.userService.findOne({ email: body.email });
 
-    if (user) {
+    if (userExist) {
       throw new BadRequestException("Credentials already in use");
     }
 
-    user = await this.authService.registerAccount(body);
+    const user = await this.authService.registerAccount(body);
 
-    return { success: true, data: user };
+    return { message: "User registered successfully", data: user };
   }
 
   @Get()
@@ -60,15 +59,49 @@ export class AuthController {
   @ApiOkResponse({})
   @HttpCode(HttpStatus.OK)
   async login(@Body() body: LoginAuthDto) {
-    const data = await this.authService.logInAccount(body);
+    const userExist = await this.userService.findByEmail(body.email);
 
-    return { success: true, data };
+    if (!userExist) {
+      throw new BadRequestException("Invalid credentials");
+    }
+
+    const isMatch = await bcrypt.compare(body.password, userExist.password);
+
+    if (!isMatch) {
+      throw new BadRequestException("Invalid credentials");
+    }
+
+    const tokens = await this.authService.generateTokens({
+      userId: userExist._id,
+      email: userExist.email,
+    });
+
+    return { user: userExist, tokens, message: "User logged in successfully" };
   }
 
   @Post("/forgot-password")
+  @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() body: ForgotPasswordDto) {
-    const result = await this.authService.forwardPasswordResetLink(body.email);
+    const userExist = await this.userService.findByEmail(body.email);
 
-    return;
+    if (!userExist) {
+      throw new NotFoundException("User account not found");
+    }
+
+    await this.authService.forwardPasswordResetLink(userExist.email);
+
+    return { message: "Sent Password reset email successfully" };
+  }
+
+  @Get("/google")
+  @UseGuards(GoogleOAuthGuard)
+  async googleAuth() {}
+
+  @Get("/google-redirect")
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(GoogleOAuthGuard)
+  async googleOauthRedirect(@Req() req) {
+    // eslint-disable-next-line no-console
+    console.log(req);
   }
 }
