@@ -27,6 +27,9 @@ export class Category extends Document {
 
   @Prop()
   updatedAt?: Date;
+
+  @Prop()
+  deletedAt?: Date;
 }
 
 export type CategoryDocument = Category & Document;
