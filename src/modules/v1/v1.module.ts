@@ -1,14 +1,14 @@
 import { Module } from "@nestjs/common";
 import { AuthModule } from "./auth/auth.module";
-import { Category } from "./category/schemas/category.schema";
 import { ServiceModule } from "./service/service.module";
 import { CloudinaryModule } from "./cloudinary/cloudinary.module";
 import { UserModule } from "./user/user.module";
+import { CategoryModule } from "./category/category.module";
 
 @Module({
   providers: [
     AuthModule,
-    // Category,
+    CategoryModule,
     ServiceModule,
     CloudinaryModule,
     UserModule,
