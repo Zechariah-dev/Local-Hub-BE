@@ -1,11 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import {
-  IsBoolean,
-  IsEmail,
-  IsNotEmpty,
-  IsPhoneNumber,
-  IsString,
-} from "class-validator";
+import { IsBoolean, IsEmail, IsNotEmpty, IsString } from "class-validator";
 import { UserRole } from "../../user/user.interface";
 
 export class SignUpAuthDto {
@@ -32,7 +26,6 @@ export class SignUpAuthDto {
   role: string;
 
   @IsString()
-  @IsPhoneNumber()
   @ApiProperty()
   phone: string;
 
